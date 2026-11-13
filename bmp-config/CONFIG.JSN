@@ -1,0 +1,15 @@
+{"config":{"version":2,
+"device_info":{"vid":"0x3265","pid":"0x0000","name":"Helix/froggy","manufacture":"Yushakobo","description":"It is a one-handed keyboard with reference to Frogpad"},
+"matrix":{"rows":5,"cols":7,"device_rows":5,"device_cols":7,"debounce":1,"is_left_hand":1,"diode_direction":0,"row_pins":[7,8,9,10,11],"col_pins":[20,19,18,17,16,15,14],
+"layout":[
+  1,  2,  3,  4,  5,  6,  0,
+  8,  9, 10, 11, 12, 13,  0,
+ 15, 16, 17, 18, 19, 20,  0,
+ 22, 23, 24, 25, 26, 27, 28,  0,
+ 29, 30, 31, 32, 33, 34, 35]},
+"mode":"SINGLE","startup":1,
+"peripheral":{"max_interval":30,"min_interval":30,"slave_latency":16},
+"central":{"max_interval":30,"min_interval":30,"slave_latency":0},
+"led":{"pin":1,"num":6},
+"keymap":{"locale":"JP","use_ascii":0},
+"reserved":[0,0,0,0,0,0,0,0]}}
