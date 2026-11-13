@@ -150,7 +150,7 @@ QMK は、キーボードの `config.h` の**後に**キーマップの `config.
 | `RGBLED_NUM` | 128（`tmk_core/nrf.mk` 31 行の `-DRGBLED_NUM=128` と、`keyboards/ble_micro_pro/config.h` 84 行の両方） | 6 | `#undef` してから `#define`（コマンドラインの定義を上書きするため） |
 | `RGBLED_NUM_DEFAULT` | 128（`keyboards/ble_micro_pro/config.h`） | 6 | `#undef` してから `#define` |
 
-この 2 つのほかに、タッピング設定（`TAPPING_TERM 200`、`ONESHOT_TAP_TOGGLE 5`、`ONESHOT_TIMEOUT 5000`）を持ちます。
+この 2 つのほかに、ワンショット設定（`ONESHOT_TAP_TOGGLE 5`、`ONESHOT_TIMEOUT 5000`）を持ちます。`TAPPING_TERM` はキーボード設定の 200 をそのまま使います。
 
 RGB エフェクトは、キーボード設定にある `RGBLIGHT_ANIMATIONS` によって、後から読み込まれる `quantum/rgblight/rgblight.h` ですべて有効になります。そのため個々の `#undef RGBLIGHT_EFFECT_*` は効かず、`keymap/config.h` には入れません。エフェクトを減らすときは、`keymap/config.h` で `#undef RGBLIGHT_ANIMATIONS` したうえで、使う `RGBLIGHT_EFFECT_*` だけを `#define` します。
 

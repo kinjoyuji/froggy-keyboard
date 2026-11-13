@@ -18,22 +18,10 @@
 #include "bmp_custom_keycode.h"
 #include "keycode_str_converter.h"
 
-// 追加
-#include <string.h>
 #include "keymap_jp.h"
 
-#ifndef MAX
-#define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
-#endif
-#ifndef MIN
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-#endif
 
 extern keymap_config_t keymap_config;
-// #ifdef RGBLIGHT_ENABLE
-// //Following line allows macro to read current RGB settings
-// extern rgblight_config_t rgblight_config;
-// #endif
 
 extern uint8_t is_master;
 
@@ -47,15 +35,13 @@ static uint16_t delay_registered_code; // 遅延入力されたキーコード
 static uint8_t delay_mat_row; // 遅延入力された行
 static uint8_t delay_mat_col; // 遅延入力された列
 static bool delay_key_stat; // 遅延入力キーがあるときにtrue
-static bool delay_key_pressing; // 延入力キーが押されている間はtrue
+static bool delay_key_pressing; // 遅延入力キーが押されている間はtrue
 static bool tapping_key;
 
 // Each layer gets a name for readability, which is then used in the keymap matrix below.
 // The underscores don't mean anything - you can have a layer called STUFF or any other name.
 // Layer names don't all need to be of the same length, obviously, and you can also skip them
 // entirely and just use numbers.
-
-bool RGBAnimation = false; //Flag for LED Layer color Refresh.
 
 // Defines the keycodes used by our macros in process_record_user
 enum custom_keycodes {
@@ -138,15 +124,15 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       ),
   /* Func
    * ,-----------------------------------------.       
-   * |RGBRST|  Hue |      |  RST |  Mac |  Win |       
+   * |AD_WO_|  Hue |      |  RST |  Mac |  Win |       
    * |------+------+------+------+------+------|       
-   * | RGB1 | VAL+ |  F7  |  F8  |  F9  |      |       
+   * |ADV_0 | VAL+ |  F7  |  F8  |  F9  |      |       
    * |------+------+------+------+------+------|       
-   * | RGB2 | VAL- |  F4  |  F5  |  F6  | F12  |       
+   * |ADV_1 | VAL- |  F4  |  F5  |  F6  | F12  |       
    * |------+------+------+------+------+------+------|
-   * | RGB3 |  F10 |  F1  |  F2  |  F3  | F11  |      |
+   * |ADV_2 |  F10 |  F1  |  F2  |  F3  | F11  |      |
    * |------+------+------+------+------+------+------|
-   * |RGBOFF|      |      |      |      |      |      |
+   * |DELBND|      |      |      |      |      |      |
    * `------------------------------------------------'
    */
   [_FUNC] = LAYOUT( \
@@ -201,17 +187,6 @@ const uint16_t keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 uint32_t keymaps_len() {
   return 32;
 }
-// 追加
-
-// define variables for reactive RGB
-//bool TOG_STATUS = false;
-// int RGB_current_mode;
-
-// void persistent_default_layer_set(uint16_t default_layer) {
-//   eeconfig_update_default_layer(default_layer);
-//   default_layer_set(default_layer);
-// }
-
 
 bool find_mairix(uint16_t keycode, uint8_t *row, uint8_t *col){
   for(uint8_t i=0; i<MATRIX_ROWS; i++){
@@ -269,35 +244,12 @@ void register_delay_code(uint8_t layer){
   }
 }
 
-///////////////////////////////
-// #ifdef RGBLIGHT_ENABLE
-// struct keybuf {
-//   char col, row;
-//   char frame;
-// };
-// struct keybuf keybufs[256];
-// unsigned char keybuf_begin, keybuf_end;
-
-// int col, row;
-// #endif
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   bool continue_process = process_record_user_bmp(keycode, record);
   if (continue_process == false)
   {
     return false;
   }
-  // #ifdef RGBLIGHT_ENABLE
-  //   col = record->event.key.col;
-  //   row = record->event.key.row;
-  //   if (record->event.pressed && ((row < 5 && is_keyboard_master()) || (row >= 5 && !is_keyboard_master()))) {
-  //     int end = keybuf_end;
-  //     keybufs[end].col = col;
-  //     keybufs[end].row = row % 5;
-  //     keybufs[end].frame = 0;
-  //     keybuf_end ++;
-  //   }
-  // #endif
 
   if(tap_timer&&keycode!=OPT_TAP_SP){
     tapping_key = true;
@@ -310,7 +262,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   }
 
   switch (keycode) {
-    // 追加
     case JP_SCLN:
     case JP_LBRC:
     case JP_LPRN:
@@ -399,50 +350,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
       break;
-    // case RGBRST:
-    //   #ifdef RGBLIGHT_ENABLE
-    //     if (record->event.pressed) {
-    //       eeconfig_update_rgblight_default();
-    //       rgblight_enable();
-    //       RGB_current_mode = rgblight_config.mode;
-    //       RGBAnimation = false;
-    //     }
-    //   #endif
-    //   break;
-    // case RGBOFF:
-    //   #ifdef RGBLIGHT_ENABLE
-    //     if (record->event.pressed) {
-    //       rgblight_disable();
-    //     }
-    //   #endif
-    //   break;
-    // case RGB1:
-    //   #ifdef RGBLIGHT_ENABLE
-    //     if (record->event.pressed) {
-    //       RGBAnimation = true;
-    //       rgblight_mode(RGBLIGHT_MODE_RAINBOW_MOOD);
-    //       RGB_current_mode = rgblight_config.mode;
-    //     }
-    //   #endif
-    //   break;
-    // case RGB2:
-    //   #ifdef RGBLIGHT_ENABLE
-    //     if (record->event.pressed) {
-    //       RGBAnimation = true;
-    //       rgblight_mode(RGBLIGHT_MODE_RAINBOW_SWIRL + 1);
-    //       RGB_current_mode = rgblight_config.mode;
-    //     }
-    //   #endif
-    //   break;
-    // case RGB3:
-    //   #ifdef RGBLIGHT_ENABLE
-    //     if (record->event.pressed) {
-    //       RGBAnimation = true;
-    //       rgblight_mode(RGBLIGHT_MODE_KNIGHT);
-    //       RGB_current_mode = rgblight_config.mode;
-    //     }
-    //   #endif
-    //   break;
     case MAC:
       if (record->event.pressed) {
         set_mac_mode(true);
@@ -453,89 +360,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         set_mac_mode(false);
       }
       break;
-    // default:
-    //   // break;
-    //   return false;
   }
 
   return true;
 }
 
-// //keyboard start-up code. Runs once when the firmware starts up.
-// void matrix_init_user(void) {
-//     #ifdef RGBLIGHT_ENABLE
-//       RGB_current_mode = rgblight_config.mode;
-//     #endif
-// }
-
-//assign the right code to your layers for OLED display
+// layer_state bitmask for each layer (1 << layer)
 #define L_BASE 0
 #define L_OPT 2
 #define L_FUNC 4
 #define L_SYM 8
 #define L_NUM 16
-#define L_FNLAYER 64
-#define L_NUMLAY 128
-#define L_NLOWER 136
-#define L_NFNLAYER 192
-#define L_MOUSECURSOR 256
-
-// // LED Effect
-// #ifdef RGBLIGHT_ENABLE
-// // unsigned char rgb[7][5][3];
-// unsigned char rgb[6][1][3];
-// void led_ripple_effect(char r, char g, char b) {
-//     static int scan_count = -10;
-//     static int keys[] = { 6, 6, 6, 7, 7 };
-//     static int keys_sum[] = { 0, 6, 12, 18, 25 };
-
-//     if (scan_count == -1) {
-//       rgblight_enable_noeeprom();
-//       rgblight_mode(RGBLIGHT_MODE_STATIC_LIGHT);
-//     } else if (scan_count >= 0 && scan_count < 5) {
-//       for (unsigned char c=keybuf_begin; c!=keybuf_end; c++) {
-//         int i = c;
-//         // FIXME:
-
-//         int y = scan_count;
-//         int dist_y = abs(y - keybufs[i].row);
-//         for (int x=0; x<keys[y]; x++) {
-//           int dist = abs(x - keybufs[i].col) + dist_y;
-//           if (dist <= keybufs[i].frame) {
-//             int elevation = MAX(0, (8 + dist - keybufs[i].frame)) << 2;
-//             if (elevation) {
-//               if ((rgb[x][y][0] != 255) && r) { rgb[x][y][0] = MIN(255, elevation + rgb[x][y][0]); }
-//               if ((rgb[x][y][1] != 255) && g) { rgb[x][y][1] = MIN(255, elevation + rgb[x][y][1]); }
-//               if ((rgb[x][y][2] != 255) && b) { rgb[x][y][2] = MIN(255, elevation + rgb[x][y][2]); }
-//             }
-//           }
-//         }
-//       }
-//     } else if (scan_count == 5) {
-//       for (unsigned char c=keybuf_begin; c!=keybuf_end; c++) {
-//         int i = c;
-//         if (keybufs[i].frame < 18) {
-//           keybufs[i].frame ++;
-//         } else {
-//           keybuf_begin ++;
-//         }
-//       }
-//     } else if (scan_count >= 6 && scan_count <= 10) {
-//       int y = scan_count - 6;
-//       for (int x=0; x<keys[y]; x++) {
-//         int at = keys_sum[y] + ((y & 1) ? x : (keys[y] - x - 1));
-//         led[at].r = rgb[x][y][0];
-//         led[at].g = rgb[x][y][1];
-//         led[at].b = rgb[x][y][2];
-//       }
-//       rgblight_set();
-//     } else if (scan_count == 11) {
-//       memset(rgb, 0, sizeof(rgb));
-//     }
-//     scan_count++;
-//     if (scan_count >= 12) { scan_count = 0; }
-// }
-// #endif
 
 uint8_t layer_state_old;
 
@@ -572,25 +407,4 @@ void matrix_scan_user(void) {
     layer_state_old = layer_state;
   }
 
-  // #ifdef RGBLIGHT_ENABLE
-  //   if(!RGBAnimation){
-  //     switch (layer_state) {
-  //       case L_BASE:
-  //           led_ripple_effect(0,112,127);
-  //         break;
-  //       case L_OPT:
-  //           led_ripple_effect(127,0,100);
-  //         break;
-  //       case L_NUM:
-  //           led_ripple_effect(127,23,0);
-  //         break;
-  //       case L_SYM:
-  //           led_ripple_effect(0,127,0);
-  //         break;
-  //       case L_FUNC:
-  //           led_ripple_effect(127,0,61);
-  //         break;
-  //       }
-  //   }
-  // #endif
 }
