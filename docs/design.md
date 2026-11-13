@@ -28,7 +28,8 @@ froggy-keyboard/
 │   ├── ENCODER.JSN
 │   └── MACRO.TXT
 ├── scripts/
-│   └── bmp-config.sh       # bmp-config/ と BMP ドライブの間でバックアップ・書き戻しをする
+│   ├── bmp-config.sh       # bmp-config/ と BMP ドライブの間でバックアップ・書き戻しをする
+│   └── keymap-table.py     # KEYMAP.JSN から README のキー配置一覧を作る
 ├── build.sh                # ファームウェア（.uf2）をビルドする
 ├── docs/
 │   ├── design.md           # この文書
@@ -60,6 +61,7 @@ froggy-keyboard/
 | `bmp-config/CONFIG.JSN` | 実機の設定（左手組み、LED のピン `pin: 1` と個数 `num: 6`、JP 配列、デバイス名 `device_info.name` など） | — |
 | `build.sh` | 固定した fork を用意し、`keymap/` を入れてビルドし、`.uf2` を `build/` に置く | 書き込み（ドライブへのコピーは手作業） |
 | `scripts/bmp-config.sh` | BMP ドライブを探し、設定ファイルのバックアップと書き戻しをする | `.uf2` の書き込み |
+| `scripts/keymap-table.py` | `bmp-config/KEYMAP.JSN` から README のキー配置一覧を作る | キー配置そのもの（それは `KEYMAP.JSN`） |
 
 ### 1.4 fork 側への依存
 
@@ -222,18 +224,31 @@ help に余分な引数を付けた場合は終了コード 2 です。起動直
 
 ドライブ探し・パス変換・改行の保持を毎回手で正しくやるのは間違えやすく、バックアップは繰り返し行う作業だからです。
 
-### 2.5 README.md の構成（日本語）
+### 2.5 `scripts/keymap-table.py`
+
+```
+scripts/keymap-table.py [--check]
+```
+
+- `bmp-config/KEYMAP.JSN` を読み、レイヤーごとのキー配置表（Markdown）を作って、`README.md` の `<!-- keymap:begin -->` と `<!-- keymap:end -->` の間を置き換えます。区間の外は変えません。
+- `--check` のときは書き換えず、README の表が `KEYMAP.JSN` と一致していれば終了コード 0、ずれていれば 1 を返します。
+- 表は実機の並び（上から 6・6・6・7・7 キー、最下段が親指）で描きます。キー数の合計がレイヤーのキー数と合わないとき、または区間の目印が見つからないときは終了コード 2 で止めます。
+- キーコードは、記号・日本語の短い名前に置き換えて表示します（例: `JP_LPRN` → `(`、`KC_BTN1` → `左クリック`）。置き換え表にないキーコードは、`KC_` を外した元の名前のまま表示します。レイヤーの名前と説明もスクリプトが持ちます。`KEYMAP.JSN` にはそれらが入っていないためです。
+- 理由: 表を README に手で書くと、`KEYMAP.JSN` を変えたときに更新を忘れてずれるため、`KEYMAP.JSN` から作ります。
+
+### 2.6 README.md の構成（日本語）
 
 1. このリポジトリについて（何が入っているか。ファームウェア本体は fork を固定して使うこと）
 2. 必要なもの（WSL2、`arm-none-eabi-gcc`、`qmk` CLI、`python3`、`git`、`make`）
 3. ビルド（`./build.sh`、環境変数の表、成果物の場所）
 4. 書き込み（`build/ble_micro_pro_froggy.uf2` を BMP のドライブにコピーする。WSL の `nrfutil` は使えない）
 5. 設定ファイルのバックアップと書き戻し（`scripts/bmp-config.sh`、`CONFIG.JSN` の注意）
-6. キー配置の変え方（実機で使われるのは `KEYMAP.JSN`。`keymap.c` を変えるのは独自キーコードや処理を増やすときだけ）
-7. BIOS/UEFI で使うときの代替設定（2.3 の要点）
-8. ライセンス
+6. キー配置一覧（`scripts/keymap-table.py` が作る区間。手で編集しない）
+7. キー配置の変え方（実機で使われるのは `KEYMAP.JSN`。`keymap.c` を変えるのは独自キーコードや処理を増やすときだけ）
+8. BIOS/UEFI で使うときの代替設定（2.3 の要点）
+9. ライセンス
 
-### 2.6 CLAUDE.md の構成（英語）
+### 2.7 CLAUDE.md の構成（英語）
 
 1. What this repo is: personal assets only; the firmware base is the pinned fork (`FROGGY_FORK_REF`), which must not be edited from here.
 2. Layout and build: `keymap/` is copied into the fork's `keymaps/froggy/`; `./build.sh`; output in `build/`.
@@ -246,7 +261,7 @@ help に余分な引数を付けた場合は終了コード 2 です。起動直
 5. BMP drive access from WSL2: it is not auto-mounted under `/mnt` and mounting needs sudo; use `powershell.exe` (see `scripts/bmp-config.sh`). Read-only unless the user asks to restore or flash.
 6. Pointers to `docs/design.md` and `docs/adr/`.
 
-### 2.7 ライセンス
+### 2.8 ライセンス
 
 リポジトリ全体（スクリプトと設定ファイルを含む）を GPL-2.0-or-later とし、`LICENSE` に GPL-2.0 の全文を置きます。`keymap.c` と `config.h` は QMK 由来でファイル先頭に GPL-2.0-or-later と書かれているので、それに合わせ、ファイルごとにライセンスが違う状態を避けます。
 
@@ -314,6 +329,7 @@ sequenceDiagram
 | `build.sh` の安全装置 | 目印ファイルのない `.cache/qmk_firmware` があると、何も変えずに 2 で終わる。`FROGGY_FORK_URL` が clone 先と同じ場所を指すと 2 で終わる |
 | `bmp-config.sh backup` | ドライブの 5 ファイルとバイト単位で一致する（`Get-FileHash` と `sha256sum` で比べる） |
 | `bmp-config.sh restore` | 壊れた JSON を渡すと何も書かずに 2 で終わる。書き込む前に `.cache/bmp-drive-backup/` に今のファイルが残る。`CONFIG.JSN` を含むと確認を求める |
+| `keymap-table.py` | 実行後に `--check` が 0 で終わる。区間の外の README は変わらない |
 
 ## 5. 決定事項
 
@@ -326,4 +342,4 @@ sequenceDiagram
 | D5 | RGB エフェクトの個別 `#undef` は持たない | `RGBLIGHT_ANIMATIONS` があるため効かない | 2.2 |
 | D6 | BIOS/UEFI 向けの代替は froggy に `DISABLE_MSC 1` を足すことで行う | froggy の独自キーコードと処理を残すため | 2.3 |
 | D7 | 設定ファイルのバックアップ・書き戻しはスクリプトにし、`.uf2` の書き込みは手作業にする | バックアップは繰り返し行い、手でやると間違えやすい。書き込みはたまにしか行わない | 2.4 |
-| D8 | ライセンスはリポジトリ全体で GPL-2.0-or-later にする | 元にした QMK 由来ファイルのライセンスに合わせ、ファイルごとの違いをなくす | 2.7 |
+| D8 | ライセンスはリポジトリ全体で GPL-2.0-or-later にする | 元にした QMK 由来ファイルのライセンスに合わせ、ファイルごとの違いをなくす | 2.8 |
