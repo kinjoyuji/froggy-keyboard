@@ -33,6 +33,7 @@ FROGGY_FORK_URL=../qmk_firmware ./build.sh                # clone from a local f
 - **The active keymap is `KEYMAP.JSN` on the BMP drive, not the layers in `keymap.c`.** `keymap.c` still matters for custom keycodes (the `"RGBRST\0"...` name string table used by `keycode_str_converter` when parsing `KEYMAP.JSN`) and `process_record_user`. Keymap C files must include `bmp.h` / `bmp_custom_keycode.h`.
 - Runtime config is `CONFIG.JSN`: `is_left_hand: 1`, locale JP, `led: {pin: 1, num: 6}`. LED data pin 1 = BMP `PIN1` = Pro Micro `D3` (Helix LED data pin). On BMP the config file's `led.pin` / `led.num` take precedence over `RGB_DI_PIN` / `RGBLED_NUM_DEFAULT`; check the config file first when debugging RGB.
 - LED power comes from BMP pin 21 (USB 5V through a diode, ~4.3V), so LEDs can light only while USB is connected. On Helix-type PCBs pins 21 and 24 are shorted; this hardware issue keeps the LEDs dark (per the BMP README, the pin-24 header must be removed). Config and `RGB_TOG` (layer 2 in `KEYMAP.JSN`) are already correct.
+- Layer 5 in `KEYMAP.JSN` is a mouse layer, toggled by `TG(5)` on the bottom-right key (reached via `MO(4)` from the base layer, and on layer 5 itself). `EX(CMB(...))` combos parse but are not implemented in this fork's extended-keycode processing, so use layer keys instead.
 - **No OLED is mounted.**
 - `JP_LT` / `JP_GT` (used in `KEYMAP.JSN` and `keymap.c`) come from the fork's customized `quantum/keymap_extras/keymap_jp.h`.
 
