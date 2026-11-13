@@ -96,7 +96,7 @@ scripts/bmp-config.sh restore --yes CONFIG.JSN # CONFIG.JSN の確認入力を�
 
 | | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|
-| 上段 | Esc | : | [ | ) | \> | } |  |
+| 上段 | Esc | : | ] | ) | \> | } |  |
 | 2段 | 英数 | J | M | B | ' | Tab |  |
 | 3段 | . | V | C | L | Z | Q |  |
 | 4段 |  | X | G | W | - | Del | Esc |
