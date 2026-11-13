@@ -38,9 +38,9 @@ FROGGY_FORK_URL=../qmk_firmware ./build.sh                # clone from a local f
 - **No OLED is mounted.**
 - `JP_LT` / `JP_GT` (used in `KEYMAP.JSN` and `keymap.c`) come from the fork's customized `quantum/keymap_extras/keymap_jp.h`.
 
-## Goal: USB in BIOS/UEFI
+## USB in BIOS/UEFI
 
-The keyboard should also work over a USB cable in BIOS/UEFI. BMP's USB HID stack is in the closed BMP API, so boot-protocol support cannot be checked from source; verify on real hardware. If the composite device (HID + mass storage) is rejected, add `#define DISABLE_MSC 1` to `keymap/config.h` (keep the froggy keymap; do not switch to `no_msc`). That build hides the drive, so edit and back up JSN files **before** flashing it; flash the normal `.uf2` from the bootloader drive to get the drive back.
+The normal build (HID + mass storage) works over a USB cable in BIOS (verified on one PC). F-keys such as `F2` are on layer 2, reached with `OSL(2)` from layer 4. BMP's USB HID stack is in the closed BMP API, so boot-protocol support cannot be checked from source. If a PC rejects the composite device, add `#define DISABLE_MSC 1` to `keymap/config.h` (keep the froggy keymap; do not switch to `no_msc`). That build hides the drive, so edit and back up JSN files **before** flashing it; flash the normal `.uf2` from the bootloader drive to get the drive back.
 
 ## BMP drive access from WSL2
 
