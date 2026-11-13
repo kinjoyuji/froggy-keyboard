@@ -52,7 +52,7 @@ LABELS = {
     "RGB_M_B": "LED呼吸", "RGB_M_R": "LEDレインボー", "RGB_M_K": "LED往復",
     "AD_WO_L": "BT新規ペアリング", "DELBNDS": "BTペアリング全削除", "ENT_WEB": "Web設定",
     "KC_MS_U": "カーソル↑", "KC_MS_D": "カーソル↓", "KC_MS_L": "カーソル←", "KC_MS_R": "カーソル→",
-    "KC_WH_U": "ホイール↑", "KC_WH_D": "ホイール↓",
+    "KC_WH_U": "ホイール↑", "KC_WH_D": "ホイール↓", "KC_WH_L": "ホイール←", "KC_WH_R": "ホイール→",
     "KC_BTN1": "左クリック", "KC_BTN2": "右クリック", "KC_BTN3": "中クリック",
     "KC_ACL0": "低速", "KC_ACL2": "高速",
 }
