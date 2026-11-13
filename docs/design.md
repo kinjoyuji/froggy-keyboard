@@ -154,9 +154,11 @@ QMK は、キーボードの `config.h` の**後に**キーマップの `config.
 
 RGB エフェクトは、キーボード設定にある `RGBLIGHT_ANIMATIONS` によって、後から読み込まれる `quantum/rgblight/rgblight.h` ですべて有効になります。そのため個々の `#undef RGBLIGHT_EFFECT_*` は効かず、`keymap/config.h` には入れません。エフェクトを減らすときは、`keymap/config.h` で `#undef RGBLIGHT_ANIMATIONS` したうえで、使う `RGBLIGHT_EFFECT_*` だけを `#define` します。
 
-### 2.3 USB 有線で BIOS/UEFI から使う場合の代替設定
+### 2.3 USB 有線で BIOS/UEFI から使う
 
-BMP は USB 接続時、キーボードと USB ドライブを 1 つの機器として見せます。BIOS/UEFI がこの組み合わせを受け付けない場合は、`keymap/config.h` に `#define DISABLE_MSC 1` を足して froggy をビルドします（別のキーマップ `no_msc` は使いません。froggy の独自キーコードや処理を残すためです）。
+BMP は USB 接続時、キーボードと USB ドライブを 1 つの機器として見せます。実機（PC 1 台）では、この通常版のまま USB 接続で BIOS に入れることを確かめています。BIOS に入るキー（例: `F2`）は、レイヤー4 の `設定(1回)` を押してからレイヤー2 で押します。
+
+BIOS/UEFI がこの組み合わせを受け付けない PC では、`keymap/config.h` に `#define DISABLE_MSC 1` を足して froggy をビルドします（別のキーマップ `no_msc` は使いません。froggy の独自キーコードや処理を残すためです）。
 
 | 得るもの | 失うもの |
 |---|---|
@@ -245,7 +247,7 @@ scripts/keymap-table.py [--check]
 5. 設定ファイルのバックアップと書き戻し（`scripts/bmp-config.sh`、`CONFIG.JSN` の注意）
 6. キー配置一覧（`scripts/keymap-table.py` が作る区間。手で編集しない）
 7. キー配置の変え方（実機で使われるのは `KEYMAP.JSN`。`keymap.c` を変えるのは独自キーコードや処理を増やすときだけ）
-8. BIOS/UEFI で使うときの代替設定（2.3 の要点）
+8. BIOS/UEFI で使う（通常版で動作確認済み、`F2` などの押し方、受け付けない PC 向けの代替設定。2.3 の要点）
 9. ライセンス
 
 ### 2.7 CLAUDE.md の構成（英語）
@@ -257,7 +259,7 @@ scripts/keymap-table.py [--check]
    - LED data pin is 1 (= Pro Micro D3), 6 LEDs, from `CONFIG.JSN`.
    - LED power comes from BMP pin 21 (~4.3V), so LEDs can light only while USB is connected. On Helix-type PCBs, pins 21 and 24 are shorted; this hardware issue keeps the LEDs dark.
    - No OLED is mounted.
-4. Goal: use the keyboard over USB in BIOS/UEFI. If the composite device (HID + mass storage) is rejected, add `#define DISABLE_MSC 1` to `keymap/config.h`; the drive then disappears, so edit/back up JSN files before flashing that build.
+4. USB in BIOS/UEFI: the normal build works (verified on one PC; BIOS keys such as `F2` are on layer 2 via `OSL(2)`). If a PC rejects the composite device (HID + mass storage) is rejected, add `#define DISABLE_MSC 1` to `keymap/config.h`; the drive then disappears, so edit/back up JSN files before flashing that build.
 5. BMP drive access from WSL2: it is not auto-mounted under `/mnt` and mounting needs sudo; use `powershell.exe` (see `scripts/bmp-config.sh`). Read-only unless the user asks to restore or flash.
 6. Pointers to `docs/design.md` and `docs/adr/`.
 

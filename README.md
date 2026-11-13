@@ -163,10 +163,13 @@ scripts/bmp-config.sh restore --yes CONFIG.JSN # CONFIG.JSN の確認入力を�
 
 `keymap.c` を変えるのは、独自キーコードや `process_record_user` の処理を増やすときだけです。そのときはビルドと書き込みが必要です。
 
-## BIOS/UEFI で使うときの代替設定
+## BIOS/UEFI で使う
+
+USB ケーブルでつなげば、通常版のファームのまま BIOS に入れます（PC 1 台で確認済み）。
+`F2` などのファンクションキーは、`数字` を押しながら `設定(1回)` を押し、指を離してからレイヤー2 のキーを押します（`F2` は 4段 3列目）。
 
 BMP は USB 接続時、キーボードと USB ドライブを 1 つの機器として見せます。
-BIOS/UEFI がこれを受け付けない場合は、`keymap/config.h` に次の 1 行を足してビルドします。
+BIOS/UEFI がこれを受け付けない PC では、`keymap/config.h` に次の 1 行を足してビルドします。
 
 ```c
 #define DISABLE_MSC 1
