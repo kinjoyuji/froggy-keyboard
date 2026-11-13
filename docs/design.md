@@ -67,7 +67,7 @@ froggy-keyboard/
 
 | 依存先（fork 内のパス） | 用途 |
 |---|---|
-| `quantum/keymap_extras/keymap_jp.h` | 独自に追加したキーコード `JP_ZHTG` `JP_DQT` `JP_LT` `JP_GT` `JP_MEISU` `JP_MKANA` を使う。`KEYMAP.JSN` も `JP_LT` / `JP_GT` を使う |
+| `quantum/keymap_extras/keymap_jp.h` | fork で独自に追加したキーコードのうち `JP_LT` / `JP_GT` を使う（`keymap.c` と `KEYMAP.JSN` の両方）。同じく追加された `JP_ZHTG` `JP_DQT` `JP_MEISU` `JP_MKANA` は、本リポジトリでは使っていない |
 | `keyboards/ble_micro_pro/config.h` | 基板設定の土台。固定コミットでは `RGBLED_NUM_DEFAULT 128`。差分は `keymap/config.h` で上書きする |
 | `tmk_core/protocol/nrf/` | BMP の USB・BLE 処理と、ドライブ上の JSON の読み込み。`bmp.c` は `DISABLE_MSC`（既定 0）で USB ドライブの有無を切り替える |
 
@@ -81,7 +81,7 @@ fork の固定コミットを変えるときは、この表の項目が新しい
 ./build.sh [-h|--help]
 ```
 
-引数は help だけです。
+引数は help だけです。help に余分な引数を付けた場合や、それ以外の引数を渡した場合は終了コード 2 です。
 
 | 環境変数 | 既定値 | 意味 |
 |---|---|---|
@@ -102,13 +102,15 @@ fork の固定コミットを変えるときは、この表の項目が新しい
 
 1. 前提チェック（失敗は終了コード 2）:
    - `git`・`make`・`arm-none-eabi-gcc`・`qmk`・`python3` があること。
-   - `FROGGY_FORK_URL` がローカルパスの場合、その実パスがビルド用 clone の実パスと同じでないこと。ユーザーの fork を `checkout --force` や `clean` で消さないための安全装置です。
+   - `FROGGY_FORK_REF` が小文字の 16 進数 40 文字であること（ブランチ名や短縮 SHA では固定にならないため）。
+   - `FROGGY_FORK_URL` がローカルパスの場合は `realpath` で絶対パスにしてから、以降の clone・`set-url`・同一パス判定に使う。相対パスのまま `origin` に登録すると、clone の中から見て別の場所を指してしまうためです。
+   - その実パスがビルド用 clone の実パスと同じでないこと。`file://` 形式でビルド用 clone を指している場合も同じ扱いにする。ユーザーの fork を `checkout --force` や `clean` で消さないための安全装置です。
 2. clone の用意:
-   - ビルド用 clone がなければ `git clone --no-checkout "$FROGGY_FORK_URL"` で作り、目印ファイルを作る（GitHub から取るときは `--filter=blob:none` を付けて取得量を減らす）。失敗は終了コード 1。
-   - ビルド用 clone があって目印ファイルがなければ、何も触らずに終了コード 2 で止める（`build.sh` が作った clone 以外を壊さないため）。メッセージでは `.cache/qmk_firmware` を削除してから再実行するよう案内する（初回 clone が途中で失敗した場合もこの状態になる）。
+   - ビルド用 clone がなければ `git clone --no-checkout "$FROGGY_FORK_URL"` で作り、目印ファイルを作る（ローカルディレクトリ以外から取るときは `--filter=blob:none` を付けて取得量を減らす）。clone に失敗したら、途中までできたディレクトリを削除して終了コード 1。
+   - ビルド用 clone があって目印ファイルがなければ、何も触らずに終了コード 2 で止める（`build.sh` が作った clone 以外を壊さないため）。この状態は、実行が途中で中断されたときや、ディレクトリを手で作ったときに起きる。メッセージでは `.cache/qmk_firmware` を削除してから再実行するよう案内する。
 3. 固定コミットへの切り替え（失敗は終了コード 1）:
    - `git remote set-url origin "$FROGGY_FORK_URL"` で取得元を毎回合わせる（環境変数を変えたときに古い取得元を使わないため）。
-   - `FROGGY_FORK_REF` が手元になければ `git fetch origin` で取る。
+   - `FROGGY_FORK_REF` が手元になければ、まず `git fetch origin "$FROGGY_FORK_REF"` でそのコミットだけを取り、取れなければ `git fetch origin` で全体を取る（SHA を指定した取得を受け付けない取得元があるため）。
    - `git checkout --force --detach "$FROGGY_FORK_REF"` と `git clean -fdx -e .build` で、固定コミットのきれいな状態に戻す。`.build/` は再ビルドを速くするために残す。
 4. キーマップの差し込み: `keyboards/ble_micro_pro/keymaps/froggy/` を削除してから `keymap/` の中身をコピーする（fork 側にだけあるファイルを残さないため）。
 5. ビルド: clone の中で、`QMK_HOME` をビルド用 clone に向けて `make SKIP_GIT=yes ble_micro_pro:froggy:uf2` を実行する。`qmk` CLI が別の場所の QMK（ユーザーの設定にある `QMK_HOME`）を読まないようにするためです。失敗は終了コード 1。
@@ -121,7 +123,11 @@ fork の固定コミットを変えるときは、この表の項目が新しい
 - 固定コミットを checkout すると、サブモジュールの場所（`lib/chibios` など）は空のディレクトリとして作られます。fork の `Makefile` は「ディレクトリがない」ときだけサブモジュールを取得する（`[ ! -e lib/chibios ]`）ので、`build.sh` がサブモジュールを取得することはありません。
 - BMP（nRF52）のビルドは `lib/` のサブモジュールのソースを使いません。printf も `tmk_core/common/nrf/printf.c` を使います。この前提で、ビルドはサブモジュールなしで行います。
 - この前提が崩れた場合は、`build.sh` に `git submodule update --init --depth 1 lib/<name>` を必要なものだけ明示的に足します。
-- `SKIP_GIT=yes` を付けるのは、`git describe` によるバージョン取得とサブモジュールの状態確認を飛ばすためです。空のサブモジュールが「dirty」と警告される無駄な出力もなくなります。
+- `SKIP_GIT=yes` は次の 3 つを飛ばします。空のサブモジュールが「dirty」と警告される無駄な出力もなくなります。
+  - `Makefile` 23 行の、`git describe` による `QMK_VERSION` の取得
+  - `Makefile` のサブモジュールの取得・状態確認のブロック
+  - `qmk generate-version-h` の中の git 呼び出し（`--skip-git`）
+- `tmk_core/nrf.mk` 40 行の `GIT_DESCRIBE` は `SKIP_GIT` に関係なく `git describe` を実行します。fork にタグがないので `fatal: No names found` が何度か表示されますが、ビルドには影響しません。
 
 #### 2.1.3 終了コード
 
@@ -129,7 +135,7 @@ fork の固定コミットを変えるときは、この表の項目が新しい
 |---|---|
 | 0 | 成功。`build/ble_micro_pro_froggy.uf2` ができている |
 | 1 | 実行中の失敗（fork の取得・checkout、`make`、成果物のコピー、`.uf2` がない） |
-| 2 | 使い方の誤り、または前提を満たしていない（必要なコマンドがない、目印ファイルがない、取得元と clone 先が同じ） |
+| 2 | 使い方の誤り、または前提を満たしていない（引数の誤り、必要なコマンドがない、`FROGGY_FORK_REF` の形式が違う、目印ファイルがない、取得元と clone 先が同じ） |
 
 ### 2.2 `keymap/config.h`
 
@@ -139,7 +145,7 @@ QMK は、キーボードの `config.h` の**後に**キーマップの `config.
 
 | マクロ | fork の値 | 本リポジトリでの値 | 書き方 |
 |---|---|---|---|
-| `RGBLED_NUM` | 128（`tmk_core/nrf.mk` の `-DRGBLED_NUM=128`） | 6 | `#undef` してから `#define`（コマンドラインの定義を上書きするため） |
+| `RGBLED_NUM` | 128（`tmk_core/nrf.mk` 31 行の `-DRGBLED_NUM=128` と、`keyboards/ble_micro_pro/config.h` 84 行の両方） | 6 | `#undef` してから `#define`（コマンドラインの定義を上書きするため） |
 | `RGBLED_NUM_DEFAULT` | 128（`keyboards/ble_micro_pro/config.h`） | 6 | `#undef` してから `#define` |
 
 この 2 つのほかに、タッピング設定（`TAPPING_TERM 200`、`ONESHOT_TAP_TOGGLE 5`、`ONESHOT_TIMEOUT 5000`）を持ちます。
@@ -154,25 +160,28 @@ BMP は USB 接続時、キーボードと USB ドライブを 1 つの機器と
 |---|---|
 | USB ドライブなしの、キーボードだけの機器になる | ドライブが出なくなるので、`bmp-config.sh` のバックアップ・書き戻しと JSN の編集ができない |
 
-このため、JSN の変更とバックアップは `DISABLE_MSC` 版を書き込む**前に**済ませます。ドライブが必要になったときは、ブートローダーのドライブから通常版の `.uf2` を書き込んで戻します。実機で必要かどうかの確認は、別の Issue で行います。
+このため、JSN の変更とバックアップは `DISABLE_MSC` 版を書き込む**前に**済ませます。ドライブが必要になったときは、ブートローダーのドライブから通常版の `.uf2` を書き込んで戻します。この設定は、実機の BIOS/UEFI で通常版が認識されない場合にだけ使います。
 
 ### 2.4 `scripts/bmp-config.sh`
 
 ```
+scripts/bmp-config.sh [-h|--help]
 scripts/bmp-config.sh locate
 scripts/bmp-config.sh backup
 scripts/bmp-config.sh restore [--yes] FILE [FILE...]
 ```
 
+help に余分な引数を付けた場合は終了コード 2 です。起動直後に `python3`・`powershell.exe`・`wslpath`・`timeout` があることを確かめ、なければ終了コード 2 で止めます。
+
 | サブコマンド | 動作 |
 |---|---|
 | `locate` | BMP ドライブのドライブ文字（例: `H:`）を表示する |
 | `backup` | ドライブから 5 ファイル（`KEYMAP.JSN` `CONFIG.JSN` `TAPTERM.JSN` `ENCODER.JSN` `MACRO.TXT`）を `bmp-config/` にコピーする。ドライブにないファイルは警告を出して飛ばす |
-| `restore [--yes] FILE...` | 指定したファイルだけを `bmp-config/` からドライブにコピーする。ファイル名の指定は必須（全部まとめて上書きする事故を防ぐため）。コピーした時点でファームウェアが内容を読み込む |
+| `restore [--yes] FILE...` | 指定したファイルだけを `bmp-config/` からドライブにコピーする。ファイル名の指定は必須（全部まとめて上書きする事故を防ぐため）。指定できるのは上の 5 つのファイル名だけで、`/` を含む指定は終了コード 2。コピーした時点でファームウェアが内容を読み込む |
 
 | 環境変数 | 既定値 | 意味 |
 |---|---|---|
-| `FROGGY_BMP_DRIVE` | （なし） | 指定するとラベル検索をせず、このドライブ文字を使う |
+| `FROGGY_BMP_DRIVE` | （なし） | 指定するとラベル検索をせず、このドライブ文字を使う。`H:` の形式で、そのドライブが存在し、BMP の目印として `VERSION.TXT` があること。満たさなければ終了コード 2 |
 
 #### 2.4.1 ドライブの探し方
 
@@ -186,22 +195,28 @@ scripts/bmp-config.sh restore [--yes] FILE [FILE...]
 
   出力はドライブ文字（`DeviceID`）だけにし、bash 側で末尾の `\r` を取り除きます。
 - 見つかったのがちょうど 1 つのときだけ使います。0 個または 2 個以上なら、リムーバブルドライブの一覧（ドライブ文字とラベル）を表示して終了コード 2 で止めます。
-- `device_info.name` を変えた `CONFIG.JSN` を書き戻すとラベルが変わり、次からは見つからなくなります。その場合は `FROGGY_BMP_DRIVE` で指定します。
+- `device_info.name` を変えた `CONFIG.JSN` を書き戻すとラベルが変わり、次からは見つからなくなります。その場合は `FROGGY_BMP_DRIVE` で指定します。指定したドライブは、形式（`X:`）・存在・`VERSION.TXT` の有無を確かめてから使います（BMP 以外のドライブに書き込まないため）。
 
 #### 2.4.2 書き戻しの安全策
 
 `restore` はドライブに書く前に、次の順で確認します。1 つでも満たさなければ、何も書かずに止めます。
 
 1. `.JSN` ファイルが JSON として正しいこと（`python3 -m json.tool FILE > /dev/null`）。壊れた JSON を書くと、ファームウェアが設定を読めなくなるためです。
-2. ドライブ上の今のファイルを `.cache/bmp-drive-backup/<日時>/` に退避すること（書き戻しで失った設定を取り戻せるようにするため）。
+2. 書き戻す対象のファイル（`restore` で指定したもの）のうち、ドライブ上にあるものを `.cache/bmp-drive-backup/<日時>/` に退避すること。ドライブにないファイルは飛ばします（書き戻しで失った設定を取り戻せるようにするため）。
 3. `CONFIG.JSN` が含まれる場合は、確認の入力を求めること（`--yes` で省略できる）。`CONFIG.JSN` はピン配置やデバイス名を変え、間違えるとキーが効かなくなったりドライブのラベルが変わったりするためです。
 
 #### 2.4.3 PowerShell の呼び出し方
 
-- WSL2 では BMP ドライブが `/mnt` に自動ではマウントされず、手動でマウントするには sudo が要ります。そのため、ドライブの操作はすべて `powershell.exe -NoProfile -Command` で行います。
+- WSL2 では BMP ドライブが `/mnt` に自動ではマウントされず、手動でマウントするには sudo が要ります。そのため、ドライブの操作はすべて `powershell.exe` で行います。
+- 呼び出しの決まり:
+  - `powershell.exe -NoProfile -NonInteractive -Command` で起動し、スクリプトの先頭で `$ErrorActionPreference='Stop'` にする（途中のエラーで確実に止めるため）。
+  - 標準入力は `</dev/null` にする。こうしないと、`powershell.exe` が端末の入力を読み取ってしまい、`CONFIG.JSN` の確認への答えが消えるためです。
+  - `timeout 60` で包む。時間切れは終了コード 1。
+  - 出力の文字コードは UTF-8 にする（ラベルやパスの文字化けを防ぐため）。
+  - PowerShell が途中で失敗した場合も、それまでに出たファイルごとの結果の行を表示してから終了コード 1 で止める（どこまでコピーできたかが分かるようにするため）。
 - コピーには `Copy-Item -LiteralPath '<元>' -Destination '<先>'` を使います。リポジトリ側のパスは `wslpath -w` で Windows 形式にし、パスの中の `'` は `''` にして渡します。`Get-Content` は文字コードや改行が変わることがあるので使いません。
 - `powershell.exe` は作業ディレクトリを `/mnt/c` にして起動します。WSL 側のディレクトリ（UNC パス）から起動したときに出る警告を避けるためです。
-- 終了コード: 0 = 成功、1 = コピーの失敗、2 = 使い方の誤りまたは前提を満たしていない（ドライブが見つからない・複数ある、JSON が正しくない、確認で中止した）。
+- 終了コード: 0 = 成功、1 = コピーの失敗・時間切れ、2 = 使い方の誤りまたは前提を満たしていない（必要なコマンドがない、ファイル名が正しくない、ドライブが見つからない・複数ある・BMP ではない、JSON が正しくない、確認で中止した）。
 
 #### 2.4.4 スクリプトにする理由
 
@@ -300,15 +315,6 @@ sequenceDiagram
 | `bmp-config.sh backup` | ドライブの 5 ファイルとバイト単位で一致する（`Get-FileHash` と `sha256sum` で比べる） |
 | `bmp-config.sh restore` | 壊れた JSON を渡すと何も書かずに 2 で終わる。書き込む前に `.cache/bmp-drive-backup/` に今のファイルが残る。`CONFIG.JSN` を含むと確認を求める |
 
-### 4.1 初回ビルド時の移行確認（1 回限り）
-
-この節は、新しいリポジトリで初めてビルドしたときに 1 回だけ行う確認です。確認が通ったら結果を PR 本文に移し、この節はこの設計書から削除します。
-
-- 比べるもの: 新しくビルドした `.elf` と、fork の `.build/ble_micro_pro_froggy.elf`（いま実機に書き込まれているファームウェアとみなすもの。`text 97404 / data 360 / bss 20988`）。
-- 方法: `arm-none-eabi-size` の値と、`arm-none-eabi-nm` のシンボル一覧を比べる。
-- 違ってよいもの: バージョンやビルド日時を表す文字列だけです（`QMK_VERSION`、`QMK_BUILDDATE`、`CHIBIOS_VERSION`、`CHIBIOS_CONTRIB_VERSION`、`GIT_DESCRIBE`）。`SKIP_GIT=yes`（`generate-version-h --skip-git`）では、これらに仮の値が入るためです。
-- それ以外の違いがあれば、`keymap/config.h` への差分の移し忘れを疑います。
-
 ## 5. 決定事項
 
 | # | 決定 | 理由 | 詳細 |
@@ -316,14 +322,8 @@ sequenceDiagram
 | D1 | 個人資産だけを持つ別リポジトリにし、fork は固定して読み取り専用で使う | fork は QMK 全体を含み、自分の資産がどれか分かりにくい。このリポジトリからは上流の更新を取り込まないので、固定して困ることがない | [ADR 0001](adr/0001-separate-repo-with-pinned-fork.md) |
 | D2 | 固定コミットは `46b3074d6` で、キーボード設定との差分は `keymap/config.h` が持つ | 実機に書き込まれているファームウェアの設定（LED 6 個）を、fork を変えずに再現するため | ADR 0001 |
 | D3 | ビルドは `build.sh` 専用の clone（`.cache/qmk_firmware`、目印ファイル付き）で行う | `make` は `quantum/version.h`・`.build/`・`*.uf2` を作業コピーに書く。worktree は元の `.git` に書き込む。clone なら別のマシンでも同じ手順で再現できる | ADR 0001 |
-| D4 | サブモジュールは取得せず、`SKIP_GIT=yes` でビルドする | nRF のビルドはサブモジュールを使わない。`SKIP_GIT` で `git describe` とサブモジュール確認を省く | 2.1.2 |
+| D4 | サブモジュールは取得せず、`SKIP_GIT=yes` でビルドする | nRF のビルドはサブモジュールを使わない。`SKIP_GIT` で `Makefile` の `git describe`・サブモジュール確認と `generate-version-h` の git 呼び出しを省く（`nrf.mk` の `GIT_DESCRIBE` は残るが無害） | 2.1.2 |
 | D5 | RGB エフェクトの個別 `#undef` は持たない | `RGBLIGHT_ANIMATIONS` があるため効かない | 2.2 |
 | D6 | BIOS/UEFI 向けの代替は froggy に `DISABLE_MSC 1` を足すことで行う | froggy の独自キーコードと処理を残すため | 2.3 |
 | D7 | 設定ファイルのバックアップ・書き戻しはスクリプトにし、`.uf2` の書き込みは手作業にする | バックアップは繰り返し行い、手でやると間違えやすい。書き込みはたまにしか行わない | 2.4 |
 | D8 | ライセンスはリポジトリ全体で GPL-2.0-or-later にする | 元にした QMK 由来ファイルのライセンスに合わせ、ファイルごとの違いをなくす | 2.7 |
-
-## 関連する作業
-
-- RGB / OLED まわりの整理（コメントアウトされたコードの削除、エフェクトの選び直し）は別の Issue で扱います。
-- BIOS/UEFI で USB 有線接続のまま使えるかの実機確認は、別の Issue で扱います。
-- LED が光らない件（BMP の 21 番ピンと 24 番ピンの短絡）は kinjoyuji/qmk_firmware#1 で扱います。
