@@ -15,6 +15,7 @@ The firmware base is the fork `kinjoyuji/qmk_firmware` pinned at `FROGGY_FORK_RE
 | `keymap/` | Copied as the whole of the fork's `keyboards/ble_micro_pro/keymaps/froggy/` at build time |
 | `bmp-config/` | Byte-exact backup of the BMP drive's `KEYMAP.JSN`, `CONFIG.JSN`, `TAPTERM.JSN`, `ENCODER.JSN`, `MACRO.TXT` (`-text` in `.gitattributes`; never reformat or change line endings) |
 | `build.sh` | Builds `build/ble_micro_pro_froggy.uf2` |
+| `scripts/keymap-table.py` | Regenerates the README "キー配置一覧" block from `bmp-config/KEYMAP.JSN`; run it after every `KEYMAP.JSN` change (`--check` exits 1 if stale). Layer names and key labels live in the script |
 | `scripts/bmp-config.sh` | `locate` / `backup` / `restore [--yes] FILE...` between `bmp-config/` and the BMP drive |
 
 ```sh
