@@ -1,0 +1,5 @@
+{"encoder":
+{"enabled":0,
+"definition":[
+{"pin":[0,0],"step":0,"action":[["KC_NO","KC_NO"], ["KC_NO","KC_NO"], ["KC_NO","KC_NO"], ["KC_NO","KC_NO"], ["KC_NO","KC_NO"]]}
+]}}
